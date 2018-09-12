@@ -32,6 +32,7 @@ dependencies {
     compile "org.hibernate:hibernate-entitymanager"
     compile('org.postgresql:postgresql')
     compile group: 'joda-time', name: 'joda-time', version: '2.10'
+    compile group: 'org.jadira.usertype', name: 'usertype.core', version: '6.0.1.GA'
     compileOnly('org.projectlombok:lombok')
     testCompile('org.springframework.boot:spring-boot-starter-test')
 }

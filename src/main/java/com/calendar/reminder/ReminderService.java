@@ -1,11 +1,15 @@
 package com.calendar.reminder;
 
+import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ReminderService {
     public Reminder calculate(String input) throws Exception {
@@ -77,31 +81,30 @@ public class ReminderService {
                 } else {
                     // at10, at7
                 }
-            } else if (parts[i].matches("([0-9]|0[0-9]|1[0-9]|2[0-3]):([0-5][0-9])(|am|pm|a.m|p.m|a.m.|p.m.|)")) {
+            } else if (isTime(parts[i]).size() > 0) {
+                List<Integer> hourMin = isTime(parts[i]);
                 alreadySetupTime = true;
-                String[] hourMin = parts[i].split(":");
-                if (hourMin[1].length() <= 2) {
+                if (hourMin.get(2) == 0) {
                     // 11:00 pm, 11:00 p.m
                     if (parts[i + 1].equalsIgnoreCase("pm") || parts[i + 1].equalsIgnoreCase("p.m")) {
-                        reminderTime.setTime(Integer.valueOf(hourMin[0]) + 12, Integer.valueOf(hourMin[1]));
+                        reminderTime.setTime(hourMin.get(0) + 12, hourMin.get(1));
                         i++;
                     } else {
                         // 11:00 am, 11:00 a.m
                         if (parts[i + 1].equalsIgnoreCase("am") || parts[i + 1].equalsIgnoreCase("a.m")) {
-                            reminderTime.setTime(Integer.valueOf(hourMin[0]), Integer.valueOf(hourMin[1]));
+                            reminderTime.setTime(hourMin.get(0), hourMin.get(1));
                             i++;
                         }
 
                         // 11:00
-                        reminderTime.setTime(Integer.valueOf(hourMin[0]), Integer.valueOf(hourMin[1]));
+                        reminderTime.setTime(hourMin.get(0), hourMin.get(1));
                     }
                 } else {
                     // 11:00am, 11:00a.m, 11:00a.m.
-                    int min = Integer.valueOf(hourMin[1].substring(0, 2));
-                    if (hourMin[1].contains("pm") || hourMin[1].contains("p.m")) {
-                        reminderTime.setTime(Integer.valueOf(hourMin[0]) + 12, min);
-                    } else if (hourMin[1].contains("am") || hourMin[1].contains("a.m")) {
-                        reminderTime.setTime(Integer.valueOf(hourMin[0]), min);
+                    if (hourMin.get(2) == Const.PM) {
+                        reminderTime.setTime(hourMin.get(0) + 12, hourMin.get(1));
+                    } else if (hourMin.get(2) == Const.AM) {
+                        reminderTime.setTime(hourMin.get(0), hourMin.get(1));
                     }
                 }
             }
@@ -123,6 +126,23 @@ public class ReminderService {
         return container;
     }
 
+
+    private List<Integer> isTime(String input) {
+        Matcher matcher = Pattern.compile("([0-9]|0[0-9]|1[0-9]|2[0-3]):([0-5][0-9])(am|pm|a.m|p.m|a.m.|p.m.|)").matcher(input);
+        List<Integer> parts = Lists.newArrayList();
+        if (matcher.find()) {
+            parts.add(Integer.valueOf(matcher.group(1)));
+            parts.add(Integer.valueOf(matcher.group(2)));
+            if (matcher.group(3).contains("a")) {
+                parts.add(Const.AM);
+            } else if (matcher.group(3).contains("p")) {
+                parts.add(Const.PM);
+            } else {
+                parts.add(Const.NON);
+            }
+        }
+        return parts;
+    }
 
     // 10min
     // 10hour

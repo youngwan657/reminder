@@ -126,15 +126,23 @@ class ReminderServiceTest extends Specification {
 
     def "ASdf"() {
         when:
-        String input = "12:00";
+        String input = "12:00am";
         Matcher matcher = Pattern.compile("([0-9]|0[0-9]|1[0-9]|2[0-3]):([0-5][0-9])(am|pm|a.m|p.m|a.m.|p.m.|)").matcher(input);
 
         then:
+//        if (matcher.find()) {
+//            println matcher.groupCount()
+//            println matcher.group(1)
+//            println matcher.group(2)
+//            println matcher.group(3)
+//        }
+
+
         if (matcher.find()) {
-            println matcher.group(0)
-            println matcher.group(1)
-            println matcher.group(2)
-            println matcher.group(3)
+            int max = matcher.groupCount();
+            for (int i = 1; i <= max; i++) {
+                println matcher.group(i);
+            }
         }
     }
 }

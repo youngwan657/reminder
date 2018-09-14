@@ -47,6 +47,19 @@ public class ReminderTime {
 
     ReminderTime afterDate(int date) throws Exception {
         this.date = this.date.plusDays(date);
+        truncate();
+        return this;
+    }
+
+    ReminderTime afterHour(int hour) throws Exception {
+        date = date.plusHours(hour);
+        truncate();
+        return this;
+    }
+
+    ReminderTime afterMin(int min) throws Exception {
+        date = date.plusMinutes(min);
+        truncate();
         return this;
     }
 
@@ -56,12 +69,6 @@ public class ReminderTime {
         if (DateTime.now().isAfter(date)) {
             throw new Exception();
         }
-        return this;
-    }
-
-    ReminderTime addMinute(int minute) {
-        date = date.plusMinutes(minute);
-        truncate();
         return this;
     }
 

@@ -5,144 +5,118 @@ import org.joda.time.DateTimeConstants
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import java.util.regex.Matcher
-import java.util.regex.Pattern
-
 class ReminderServiceTest extends Specification {
     static ReminderService service = new ReminderService()
 
-    static DateTime now = DateTime.now()
+    static DateTime now = DateTime.parse("2020-09-12T09:00-07:00");
     static DateTime monday = DateTime.now().withDayOfWeek(DateTimeConstants.MONDAY)
     static DateTime friday = DateTime.now().withDayOfWeek(DateTimeConstants.FRIDAY)
 
-    @Unroll
+    def day(int year, int month, int day, int hour, int min) {
+        return String.format("%04d-%02d-%02dT%02d:%02d:00-07:00", year, month, day, hour, min);
+    }
+
+    @Unroll('#input')
     def "parse"() {
         expect:
         def reminder = service.parse(input, inputDate)
         reminder.getContent() == content
-        reminder.getReminderTime().getDate() == outputDate
+        reminder.getReminderTime().getDate() == expectedDate
 
         where:
-        input                       | inputDate || content   | outputDate
-//        "10min content"             | now       || "content" | new ReminderTime(now).addMinute(10).getDate()
-//        "10 min content"            | now       || "content" | service.truncate(now.plusMinutes(10))
-//        "10minute content"          | now       || "content" | service.truncate(now.plusMinutes(10))
-//        "10minutes content"         | now       || "content" | service.truncate(now.plusMinutes(10))
-//        "After 10min content"       | now       || "content" | new ReminderTime(now).addMinute(10).getDate()
-//        "10min later content"       | now       || "content" | new ReminderTime(now).addMinute(10).getDate()
-//
-//        "10hour content"            | now       || "content" | service.truncate(now.plusHours(10))
-//        "10 hour content"           | now       || "content" | service.truncate(now.plusHours(10))
-//        "10hours content"           | now       || "content" | service.truncate(now.plusHours(10))
-//        "10 hours content"          | now       || "content" | service.truncate(now.plusHours(10))
+        input                       | inputDate || content   | expectedDate
+        "10min content"             | now       || "content" | DateTime.parse(day(2020, 9, 12, 9, 10))
+        "10 min content"            | now       || "content" | DateTime.parse(day(2020, 9, 12, 9, 10))
+        "10minute content"          | now       || "content" | DateTime.parse(day(2020, 9, 12, 9, 10))
+        "10minutes content"         | now       || "content" | DateTime.parse(day(2020, 9, 12, 9, 10))
+        "After 10min content"       | now       || "content" | DateTime.parse(day(2020, 9, 12, 9, 10))
+        "10min later content"       | now       || "content" | DateTime.parse(day(2020, 9, 12, 9, 10))
 
-        "10:20 content"             | now       || "content" | new ReminderTime(now).setTime(10, 20).getDate()
-        "10:20am content"           | now       || "content" | new ReminderTime(now).setTime(10, 20).getDate()
-        "10:20 am content"          | now       || "content" | new ReminderTime(now).setTime(10, 20).getDate()
-        "10:20a.m content"          | now       || "content" | new ReminderTime(now).setTime(10, 20).getDate()
-        "10:20 a.m content"         | now       || "content" | new ReminderTime(now).setTime(10, 20).getDate()
-//
-        "10:20pm content"           | now       || "content" | new ReminderTime(now).setTime(22, 20).getDate()
-        "10:20 pm content"          | now       || "content" | new ReminderTime(now).setTime(22, 20).getDate()
-        "10:20p.m content"          | now       || "content" | new ReminderTime(now).setTime(22, 20).getDate()
-        "10:20 p.m content"         | now       || "content" | new ReminderTime(now).setTime(22, 20).getDate()
-//
-//        "At 9 content"              | now       || "content" | service.setHourAndMinute(now, 9, 0)
-//        "At 9am content"            | now       || "content" | service.setHourAndMinute(now, 9, 0)
-//        "At 9 am content"           | now       || "content" | service.setHourAndMinute(now, 9, 0)
-//        "At 9a.m content"           | now       || "content" | service.setHourAndMinute(now, 9, 0)
-//        "At 9 a.m content"          | now       || "content" | service.setHourAndMinute(now, 9, 0)
-//
-//        "At 9pm content"            | now       || "content" | service.setHourAndMinute(now, 21, 0)
-//        "At 9 pm content"           | now       || "content" | service.setHourAndMinute(now, 21, 0)
-//        "At 9p.m content"           | now       || "content" | service.setHourAndMinute(now, 21, 0)
-//        "At 9 p.m content"          | now       || "content" | service.setHourAndMinute(now, 21, 0)
-//
-//        "Tomorrow content"          | friday    || "content" | service.setHourAndMinute(now.plusDays(1), WEEKEND_HOUR, WEEKEND_MIN)
-//        "At 9 tomorrow content"     | friday    || "content" | service.setHourAndMinute(now.plusDays(1), WEEKEND_HOUR, WEEKEND_MIN)
-//        "At 9am tomorrow content"   | friday    || "content" | service.setHourAndMinute(now.plusDays(1), WEEKEND_HOUR, WEEKEND_MIN)
-//        "At 9 am tomorrow content"  | friday    || "content" | service.setHourAndMinute(now.plusDays(1), WEEKEND_HOUR, WEEKEND_MIN)
-//        "At 9a.m tomorrow content"  | friday    || "content" | service.setHourAndMinute(now.plusDays(1), WEEKEND_HOUR, WEEKEND_MIN)
-//        "At 9 a.m tomorrow content" | friday    || "content" | service.setHourAndMinute(now.plusDays(1), WEEKEND_HOUR, WEEKEND_MIN)
-//
-//        "Tomorrow content"          | monday    || "content" | service.setHourAndMinute(now.plusDays(1), WEEKDAY_HOUR, WEEKDAY_MIN)
-//        "At 9 tomorrow content"     | monday    || "content" | service.setHourAndMinute(now.plusDays(1), WEEKDAY_HOUR, WEEKDAY_MIN)
-//        "At 9am tomorrow content"   | monday    || "content" | service.setHourAndMinute(now.plusDays(1), WEEKDAY_HOUR, WEEKDAY_MIN)
-//        "At 9 am tomorrow content"  | monday    || "content" | service.setHourAndMinute(now.plusDays(1), WEEKDAY_HOUR, WEEKDAY_MIN)
-//        "At 9a.m tomorrow content"  | monday    || "content" | service.setHourAndMinute(now.plusDays(1), WEEKDAY_HOUR, WEEKDAY_MIN)
-//        "At 9 a.m tomorrow content" | monday    || "content" | service.setHourAndMinute(now.plusDays(1), WEEKDAY_HOUR, WEEKDAY_MIN)
-//
-//        "At 9pm tomorrow content"   | monday    || "content" | service.setHourAndMinute(now.plusDays(1), WEEKDAY_HOUR, WEEKDAY_MIN)
-//        "At 9 pm tomorrow content"  | monday    || "content" | service.setHourAndMinute(now.plusDays(1), WEEKDAY_HOUR, WEEKDAY_MIN)
-//        "At 9p.m tomorrow content"  | monday    || "content" | service.setHourAndMinute(now.plusDays(1), WEEKDAY_HOUR, WEEKDAY_MIN)
-//        "At 9 p.m tomorrow content" | monday    || "content" | service.setHourAndMinute(now.plusDays(1), WEEKDAY_HOUR, WEEKDAY_MIN)
-//
-        "On Monday content"         | now       || "content" | new ReminderTime(now).setDayOfWeekWithTime(DateTimeConstants.MONDAY, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN).getDate()
-        "On Mon content"            | now       || "content" | new ReminderTime(now).setDayOfWeekWithTime(DateTimeConstants.MONDAY, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN).getDate()
-        "Mon content"               | now       || "content" | new ReminderTime(now).setDayOfWeekWithTime(DateTimeConstants.MONDAY, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN).getDate()
+        "10hour content"            | now       || "content" | DateTime.parse(day(2020, 9, 12, 19, 0))
+        "10 hour content"           | now       || "content" | DateTime.parse(day(2020, 9, 12, 19, 0))
+        "10hours content"           | now       || "content" | DateTime.parse(day(2020, 9, 12, 19, 0))
+        "10 hours content"          | now       || "content" | DateTime.parse(day(2020, 9, 12, 19, 0))
 
-        "On Tuesday content"        | now       || "content" | new ReminderTime(now).setDayOfWeekWithTime(DateTimeConstants.TUESDAY, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN).getDate()
-        "On Tue content"            | now       || "content" | new ReminderTime(now).setDayOfWeekWithTime(DateTimeConstants.TUESDAY, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN).getDate()
-        "Tue content"               | now       || "content" | new ReminderTime(now).setDayOfWeekWithTime(DateTimeConstants.TUESDAY, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN).getDate()
+        "at 3pm in 2 days content"  | now       || "content" | DateTime.parse(day(2020, 9, 14, 15, 0))
+        "3 days later content"      | now       || "content" | DateTime.parse(day(2020, 9, 15, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN))
 
-        "On Wednesday content"      | now       || "content" | new ReminderTime(now).setDayOfWeekWithTime(DateTimeConstants.WEDNESDAY, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN).getDate()
-        "On Wed content"            | now       || "content" | new ReminderTime(now).setDayOfWeekWithTime(DateTimeConstants.WEDNESDAY, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN).getDate()
-        "Wed content"               | now       || "content" | new ReminderTime(now).setDayOfWeekWithTime(DateTimeConstants.WEDNESDAY, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN).getDate()
+        "10:20 content"             | now       || "content" | DateTime.parse(day(2020, 9, 12, 10, 20))
+        "10:20am content"           | now       || "content" | DateTime.parse(day(2020, 9, 12, 10, 20))
+        "10:20 am content"          | now       || "content" | DateTime.parse(day(2020, 9, 12, 10, 20))
+        "10:20a.m content"          | now       || "content" | DateTime.parse(day(2020, 9, 12, 10, 20))
+        "10:20 a.m content"         | now       || "content" | DateTime.parse(day(2020, 9, 12, 10, 20))
+        "10:20pm content"           | now       || "content" | DateTime.parse(day(2020, 9, 12, 22, 20))
+        "10:20 pm content"          | now       || "content" | DateTime.parse(day(2020, 9, 12, 22, 20))
+        "10:20p.m content"          | now       || "content" | DateTime.parse(day(2020, 9, 12, 22, 20))
+        "10:20 p.m content"         | now       || "content" | DateTime.parse(day(2020, 9, 12, 22, 20))
 
-        "On Thursday content"       | now       || "content" | new ReminderTime(now).setDayOfWeekWithTime(DateTimeConstants.THURSDAY, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN).getDate()
-        "On Thu content"            | now       || "content" | new ReminderTime(now).setDayOfWeekWithTime(DateTimeConstants.THURSDAY, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN).getDate()
-        "Thu content"               | now       || "content" | new ReminderTime(now).setDayOfWeekWithTime(DateTimeConstants.THURSDAY, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN).getDate()
+        "At 22 content"             | now       || "content" | DateTime.parse(day(2020, 9, 12, 22, 0))
+        "At 9am content"            | now       || "content" | DateTime.parse(day(2020, 9, 12, 9, 0))
+        "At 9 am content"           | now       || "content" | DateTime.parse(day(2020, 9, 12, 9, 0))
+        "At 9a.m content"           | now       || "content" | DateTime.parse(day(2020, 9, 12, 9, 0))
+        "At 9 a.m content"          | now       || "content" | DateTime.parse(day(2020, 9, 12, 9, 0))
 
-        "On Friday content"         | now       || "content" | new ReminderTime(now).setDayOfWeekWithTime(DateTimeConstants.FRIDAY, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN).getDate()
-        "On Fri content"            | now       || "content" | new ReminderTime(now).setDayOfWeekWithTime(DateTimeConstants.FRIDAY, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN).getDate()
-        "Fri content"               | now       || "content" | new ReminderTime(now).setDayOfWeekWithTime(DateTimeConstants.FRIDAY, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN).getDate()
+        "At 9pm content"            | now       || "content" | DateTime.parse(day(2020, 9, 12, 21, 0))
+        "At 9 pm content"           | now       || "content" | DateTime.parse(day(2020, 9, 12, 21, 0))
+        "At 9p.m content"           | now       || "content" | DateTime.parse(day(2020, 9, 12, 21, 0))
+        "At 9 p.m content"          | now       || "content" | DateTime.parse(day(2020, 9, 12, 21, 0))
 
-        "On Saturday content"       | now       || "content" | new ReminderTime(now).setDayOfWeekWithTime(DateTimeConstants.SATURDAY, Const.WEEKEND_HOUR, Const.WEEKEND_MIN).getDate()
-        "On Sat content"            | now       || "content" | new ReminderTime(now).setDayOfWeekWithTime(DateTimeConstants.SATURDAY, Const.WEEKEND_HOUR, Const.WEEKEND_MIN).getDate()
-        "Sat content"               | now       || "content" | new ReminderTime(now).setDayOfWeekWithTime(DateTimeConstants.SATURDAY, Const.WEEKEND_HOUR, Const.WEEKEND_MIN).getDate()
+        "Tomorrow content"          | now       || "content" | DateTime.parse(day(2020, 9, 13, Const.WEEKEND_HOUR, Const.WEEKEND_MIN))
+        "At 9 tomorrow content"     | now       || "content" | DateTime.parse(day(2020, 9, 13, 9, 0))
+        "At 9am tomorrow content"   | now       || "content" | DateTime.parse(day(2020, 9, 13, 9, 0))
+        "At 9 am tomorrow content"  | now       || "content" | DateTime.parse(day(2020, 9, 13, 9, 0))
+        "At 9a.m tomorrow content"  | now       || "content" | DateTime.parse(day(2020, 9, 13, 9, 0))
+        "At 9 a.m tomorrow content" | now       || "content" | DateTime.parse(day(2020, 9, 13, 9, 0))
 
-        "On Sunday content"         | now       || "content" | new ReminderTime(now).setDayOfWeekWithTime(DateTimeConstants.SUNDAY, Const.WEEKEND_HOUR, Const.WEEKEND_MIN).getDate()
-        "On Sun content"            | now       || "content" | new ReminderTime(now).setDayOfWeekWithTime(DateTimeConstants.SUNDAY, Const.WEEKEND_HOUR, Const.WEEKEND_MIN).getDate()
-        "Sun content"               | now       || "content" | new ReminderTime(now).setDayOfWeekWithTime(DateTimeConstants.SUNDAY, Const.WEEKEND_HOUR, Const.WEEKEND_MIN).getDate()
-
-        "On Sunday 10:20 content"   | now       || "content" | new ReminderTime(now).setDayOfWeekWithTime(DateTimeConstants.SUNDAY, 10, 20).getDate()
-        "10:20 on Sunday content"   | now       || "content" | new ReminderTime(now).setDayOfWeekWithTime(DateTimeConstants.SUNDAY, 10, 20).getDate()
-
-        "Next Sunday 10:20 content" | now       || "content" | new ReminderTime(now).setDayOfWeekWithTime(DateTimeConstants.SUNDAY, 10, 20).afterDate(7).getDate();
-//
-        "10:20p.m content" | now || "content" | new ReminderTime(now).setTime(22, 20).getDate()
-//        "In the morning content"    | now       || "content" | service.setHourAndMinute(now, MORNING, 0)
-//        "Morning content"           | now       || "content" | service.setHourAndMinute(now, MORNING, 0)
-//
-//        "In the afternoon content"  | now       || "content" | service.setHourAndMinute(now, AFTERNOON, 0)
-//        "Afternoon content"         | now       || "content" | service.setHourAndMinute(now, AFTERNOON, 0)
-//
-//        "In the evening content"    | now       || "content" | service.setHourAndMinute(now, EVENING, 0)
-//        "Evening content"           | now       || "content" | service.setHourAndMinute(now, EVENING, 0)
-//
-//        "At night content"          | now       || "content" | service.setHourAndMinute(now, NIGHT, 0)
-//        "Night content"             | now       || "content" | service.setHourAndMinute(now, NIGHT, 0)
-    }
-
-    def "ASdf"() {
-        when:
-        String input = "12:00am";
-        Matcher matcher = Pattern.compile("([0-9]|0[0-9]|1[0-9]|2[0-3]):([0-5][0-9])(am|pm|a.m|p.m|a.m.|p.m.|)").matcher(input);
-
-        then:
-//        if (matcher.find()) {
-//            println matcher.groupCount()
-//            println matcher.group(1)
-//            println matcher.group(2)
-//            println matcher.group(3)
-//        }
+        "At 9pm tomorrow content"   | now       || "content" | DateTime.parse(day(2020, 9, 13, 21, 0))
+        "At 9 pm tomorrow content"  | now       || "content" | DateTime.parse(day(2020, 9, 13, 21, 0))
+        "At 9p.m tomorrow content"  | now       || "content" | DateTime.parse(day(2020, 9, 13, 21, 0))
+        "At 9 p.m tomorrow content" | now       || "content" | DateTime.parse(day(2020, 9, 13, 21, 0))
 
 
-        if (matcher.find()) {
-            int max = matcher.groupCount();
-            for (int i = 1; i <= max; i++) {
-                println matcher.group(i);
-            }
-        }
+        "On Monday content"         | now       || "content" | DateTime.parse(day(2020, 9, 14, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN))
+        "On Mon content"            | now       || "content" | DateTime.parse(day(2020, 9, 14, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN))
+        "Mon content"               | now       || "content" | DateTime.parse(day(2020, 9, 14, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN))
+
+        "On Tuesday content"        | now       || "content" | DateTime.parse(day(2020, 9, 15, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN))
+        "On Tue content"            | now       || "content" | DateTime.parse(day(2020, 9, 15, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN))
+        "Tue content"               | now       || "content" | DateTime.parse(day(2020, 9, 15, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN))
+
+        "On Wednesday content"      | now       || "content" | DateTime.parse(day(2020, 9, 16, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN))
+        "On Wed content"            | now       || "content" | DateTime.parse(day(2020, 9, 16, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN))
+        "Wed content"               | now       || "content" | DateTime.parse(day(2020, 9, 16, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN))
+
+        "On Thursday content"       | now       || "content" | DateTime.parse(day(2020, 9, 17, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN))
+        "On Thu content"            | now       || "content" | DateTime.parse(day(2020, 9, 17, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN))
+        "Thu content"               | now       || "content" | DateTime.parse(day(2020, 9, 17, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN))
+
+        "On Friday content"         | now       || "content" | DateTime.parse(day(2020, 9, 18, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN))
+        "On Fri content"            | now       || "content" | DateTime.parse(day(2020, 9, 18, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN))
+        "Fri content"               | now       || "content" | DateTime.parse(day(2020, 9, 18, Const.WEEKDAY_HOUR, Const.WEEKDAY_MIN))
+
+        "On Saturday content"       | now       || "content" | DateTime.parse(day(2020, 9, 12, Const.WEEKEND_HOUR, Const.WEEKEND_MIN))
+        "On Sat content"            | now       || "content" | DateTime.parse(day(2020, 9, 12, Const.WEEKEND_HOUR, Const.WEEKEND_MIN))
+        "Sat content"               | now       || "content" | DateTime.parse(day(2020, 9, 12, Const.WEEKEND_HOUR, Const.WEEKEND_MIN))
+
+        "On Sunday content"         | now       || "content" | DateTime.parse(day(2020, 9, 13, Const.WEEKEND_HOUR, Const.WEEKEND_MIN))
+        "On Sun content"            | now       || "content" | DateTime.parse(day(2020, 9, 13, Const.WEEKEND_HOUR, Const.WEEKEND_MIN))
+        "Sun content"               | now       || "content" | DateTime.parse(day(2020, 9, 13, Const.WEEKEND_HOUR, Const.WEEKEND_MIN))
+
+        "On Sunday 10:20 content"   | now       || "content" | DateTime.parse(day(2020, 9, 13, 10, 20))
+        "10:20 on Sunday content"   | now       || "content" | DateTime.parse(day(2020, 9, 13, 10, 20))
+
+        "Next Sunday 10:20 content" | now       || "content" | DateTime.parse(day(2020, 9, 20, 10, 20))
+
+        "In the morning content"    | now       || "content" | DateTime.parse(day(2020, 9, 12, Const.MORNING, 0))
+        "Morning content"           | now       || "content" | DateTime.parse(day(2020, 9, 12, Const.MORNING, 0))
+
+        "In the afternoon content"  | now       || "content" | DateTime.parse(day(2020, 9, 12, Const.AFTERNOON, 0))
+        "Afternoon content"         | now       || "content" | DateTime.parse(day(2020, 9, 12, Const.AFTERNOON, 0))
+
+        "In the evening content"    | now       || "content" | DateTime.parse(day(2020, 9, 12, Const.EVENING, 0))
+        "Evening content"           | now       || "content" | DateTime.parse(day(2020, 9, 12, Const.EVENING, 0))
+
+        "At night content"          | now       || "content" | DateTime.parse(day(2020, 9, 12, Const.NIGHT, 0))
+        "Night content"             | now       || "content" | DateTime.parse(day(2020, 9, 12, Const.NIGHT, 0))
     }
 }
